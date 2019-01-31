@@ -26,6 +26,16 @@ dependencies {
     api 'com.android.support:appcompat-v7:28.0.0'
     api 'com.android.support:design:28.0.0'
     api 'com.android.support.constraint:constraint-layout:1.1.3'
+    api('com.google.firebase:firebase-core:16.0.7') {
+        exclude module: 'support-v4'
+    }
+    api('com.firebaseui:firebase-ui-auth:4.1.0') {
+        exclude module: 'play-services-flags'
+        exclude module: 'support-v4'
+        exclude module: 'customtabs'
+        exclude module: 'animate-vector-drawable'
+    }
     application project(':app')
     feature project(':feature')
 }
+

@@ -27,7 +27,6 @@ dependencies {
     implementation project(':base')
     wearApp project(':wear')
     implementation "com.google.android.gms:play-services-wearable:$play_services_version"
-    api('com.google.firebase:firebase-core:16.0.7') {
-        exclude module: 'support-v4'
-    }
 }
+
+apply plugin: 'com.google.gms.google-services'
