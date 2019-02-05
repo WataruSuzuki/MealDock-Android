@@ -9,6 +9,8 @@ import android.util.Log
 import android.widget.Toast
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
+import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 
@@ -34,13 +36,6 @@ class FirebaseService : Service() {
     val TAG = FirebaseService::class.java.simpleName
     val RC_SIGN_IN = 9999
     fun requestToAuth(activity: Activity) {
-        // Choose authentication providers
-        val providers = arrayListOf(
-                //AuthUI.IdpConfig.GoogleBuilder().build(),
-                //AuthUI.IdpConfig.PhoneBuilder().build(),
-                //AuthUI.IdpConfig.TwitterBuilder().build(),
-                //AuthUI.IdpConfig.FacebookBuilder().build(),
-                AuthUI.IdpConfig.EmailBuilder().build())
         // Create and launch sign-in intent
 
         activity.startActivityForResult(
@@ -50,6 +45,17 @@ class FirebaseService : Service() {
                         .build(),
                 RC_SIGN_IN)
     }
+
+    private val providers : List<AuthUI.IdpConfig>
+        get() {
+            // Choose authentication providers
+            return arrayListOf(
+                    //AuthUI.IdpConfig.GoogleBuilder().build(),
+                    //AuthUI.IdpConfig.PhoneBuilder().build(),
+                    //AuthUI.IdpConfig.TwitterBuilder().build(),
+                    //AuthUI.IdpConfig.FacebookBuilder().build(),
+                    AuthUI.IdpConfig.EmailBuilder().build())
+        }
 
     fun onResultAuth(resultCode: Int, data: Intent?) {
         val response = IdpResponse.fromResultIntent(data)
@@ -68,29 +74,42 @@ class FirebaseService : Service() {
 
     private var currentUser : FirebaseUser? = null
     fun startSession(activity: Activity) {
+        currentUser = auth.currentUser
         if (currentUser == null) {
-            signInWith(activity, "member_unittest@mealdock.com", "unittest")
+            //signInWith(activity, "member_unittest@mealdock.com", "unittest")
+            silentSignIn(activity)
         }
     }
 
     fun signInWith(activity: Activity, email: String, password: String) {
-
         //var config = AuthUI.IdpConfig
         auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(activity) { task ->
-                    if (task.isSuccessful) {
-                        // Sign in success, update UI with the signed-in user's information
-                        Log.d(TAG, "signInWithEmail:success")
-                        currentUser = auth.currentUser
-                    } else {
-                        // If sign in fails, display a message to the user.
-                        Log.w(TAG, "signInWithEmail:failure", task.exception)
-                        Toast.makeText(baseContext, "Authentication failed.",
-                                Toast.LENGTH_SHORT).show()
-                        requestToAuth(activity)
-                    }
+                    onCompletionAuthResult(activity, task)
                 }
 
+    }
+
+    fun silentSignIn(activity: Activity) {
+        AuthUI.getInstance()
+                .silentSignIn(activity, providers)
+                .addOnCompleteListener(activity) { task ->
+                    onCompletionAuthResult(activity, task)
+                }
+    }
+
+    private fun onCompletionAuthResult(activity: Activity, task : Task<AuthResult>) {
+        if (task.isSuccessful) {
+            // Sign in success, update UI with the signed-in user's information
+            Log.d(TAG, "signInWithEmail:success")
+            currentUser = auth.currentUser
+        } else {
+            // If sign in fails, display a message to the user.
+            Log.w(TAG, "signInWithEmail:failure", task.exception)
+            Toast.makeText(baseContext, "Authentication failed.",
+                    Toast.LENGTH_SHORT).show()
+            requestToAuth(activity)
+        }
     }
 
     fun signOut() {
