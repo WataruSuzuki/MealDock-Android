@@ -1,6 +1,7 @@
 package dev.jchankchan.mealdock.feature
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.Service
 import android.content.Intent
 import android.os.Binder
@@ -13,11 +14,13 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import dmax.dialog.SpotsDialog
 
 class FirebaseService : Service() {
 
     private val firebaseApiBinder = FirebaseApiBinder()
     private lateinit var auth: FirebaseAuth
+    private lateinit var dialog : AlertDialog
 
     override fun onCreate() {
         super.onCreate()
@@ -74,10 +77,15 @@ class FirebaseService : Service() {
 
     private var currentUser : FirebaseUser? = null
     fun startSession(activity: Activity) {
+        dialog = SpotsDialog.Builder().setContext(activity).build()
+        dialog.show()
+
         currentUser = auth.currentUser
         if (currentUser == null) {
             //signInWith(activity, "member_unittest@mealdock.com", "unittest")
             silentSignIn(activity)
+        } else {
+            dialog.dismiss()
         }
     }
 
@@ -87,10 +95,10 @@ class FirebaseService : Service() {
                 .addOnCompleteListener(activity) { task ->
                     onCompletionAuthResult(activity, task)
                 }
-
     }
 
     fun silentSignIn(activity: Activity) {
+        dialog.show()
         AuthUI.getInstance()
                 .silentSignIn(activity, providers)
                 .addOnCompleteListener(activity) { task ->
@@ -99,6 +107,9 @@ class FirebaseService : Service() {
     }
 
     private fun onCompletionAuthResult(activity: Activity, task : Task<AuthResult>) {
+        if (dialog.isShowing) {
+            dialog.dismiss()
+        }
         if (task.isSuccessful) {
             // Sign in success, update UI with the signed-in user's information
             Log.d(TAG, "signInWithEmail:success")
